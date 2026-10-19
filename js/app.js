@@ -16,7 +16,7 @@ const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { 
 
 const state = {
   engineId: store.get('ge.engine') && ENGINES[store.get('ge.engine')] ? store.get('ge.engine') : 'v12',
-  demo: store.get('ge.demo') !== 'off',
+  demo: store.get('ge.demo') === 'on',          // GPS by default; demo is opt-in
   stats: store.get('ge.stats') !== 'off',
   running: false, throttle: 0, wakeLock: null, cranking: false
 };
@@ -33,7 +33,7 @@ function showScreen(name) {
 
 /* ---------- i18n + brand ---------- */
 setLang(defaultLang());
-onLangChange(() => { if (cluster && cluster.engine) cluster.build(); if (pickerBg) buildPickerBg(); buildEngineCards(); markSelected(); });
+onLangChange(() => { if (cluster && cluster.engine) cluster.build(); if (pickerBg) buildPickerBg(); buildEngineCards(); markSelected(); updateModeChip(); });
 $('langSeg').addEventListener('click', e => { const b = e.target.closest('button[data-lang]'); if (b) setLang(b.dataset.lang); });
 
 /* ---------- engine cards ---------- */
@@ -146,6 +146,7 @@ async function startDrive() {
   audio.on(true); audio.ignition(true);
   drivetrain.start(); speed.start();
   state.running = true; startedAt = Date.now();
+  updateModeChip();
   requestWakeLock();
   showVolumeToast();
   updateRevBtn(0);
@@ -178,7 +179,7 @@ function showVolumeToast() {
 }
 
 /* ---------- game loop ---------- */
-let loopOn = false, last = 0, slowFrames = 0;
+let loopOn = false, last = 0, slowFrames = 0, stillFor = 0;
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (dt > 0.033) fx.markSlow(true);
@@ -189,6 +190,12 @@ function loop(now) {
   if (!!d.cranking !== state.cranking) { state.cranking = !!d.cranking; audio.crank(state.cranking); }
   audio.update({ rpm: d.rpm, load: d.load, overrun: d.overrun, event: d.event });
   updateRevBtn(d.kmh);
+  // On GPS with the car standing still (or no fix), offer the demo drive after a few seconds
+  if (!state.demo && state.running) {
+    stillFor = d.kmh < 2 ? stillFor + dt : 0;
+    const show = stillFor > 6 || state.gps === 'blocked';
+    if (show === $('demoHint').hidden) $('demoHint').hidden = !show;
+  }
   if (state.running || d.rpm > 0) requestAnimationFrame(loop); else loopOn = false;
 }
 
@@ -207,14 +214,30 @@ function toggleSwitch(btn, key, onChange) {
 }
 $('demoSwitch').classList.toggle('on', state.demo); $('demoSwitch').setAttribute('aria-checked', String(state.demo));
 $('statsSwitch').classList.toggle('on', state.stats); $('statsSwitch').setAttribute('aria-checked', String(state.stats));
-$('demoSwitch').onclick = () => toggleSwitch($('demoSwitch'), 'ge.demo', on => {
-  state.demo = on; setGpsStatus(on ? 'off' : (speed && speed.status) || 'off');
-  if (state.running) { speed.stop && speed.stop(); speed = on ? new DemoSpeed() : new GpsSpeed(setGpsStatus); speed.start(); }
-});
+// One place that switches the speed source, used by the menu toggle and the "try demo" hint.
+function setDemo(on) {
+  state.demo = on; store.set('ge.demo', on ? 'on' : 'off');
+  $('demoSwitch').classList.toggle('on', on); $('demoSwitch').setAttribute('aria-checked', String(on));
+  if (state.running && speed) { speed.stop && speed.stop(); speed = on ? new DemoSpeed() : new GpsSpeed(setGpsStatus); speed.start(); }
+  setGpsStatus(on ? 'off' : (speed && speed.status) || 'pending');
+  if (on) { $('demoHint').hidden = true; stillFor = 0; }
+}
+$('demoSwitch').onclick = () => setDemo(!state.demo);
+$('demoHint').onclick = () => setDemo(true);
 $('statsSwitch').onclick = () => toggleSwitch($('statsSwitch'), 'ge.stats', on => { state.stats = on; });
 function setGpsStatus(s) {
+  state.gps = s;
   const map = { on: 'On', off: state.demo ? 'Off (demo)' : 'Off', pending: 'Pending…', blocked: 'Blocked' };
   $('gpsStatus').textContent = map[s] || 'Off (demo)';
+  updateModeChip();
+}
+// The chip on the cluster says what is moving the needles: a simulated demo drive or the car's own GPS.
+function updateModeChip() {
+  const chip = $('modeChip'), txt = $('modeChipText'); if (!chip || !txt) return;
+  if (state.demo) { chip.className = 'mode-chip'; txt.textContent = t('modeDemo'); return; }
+  const s = state.gps || 'off';
+  chip.className = 'mode-chip gps' + (s === 'on' ? ' live' : s === 'blocked' ? ' blocked' : '');
+  txt.textContent = t(s === 'on' ? 'modeGpsLive' : s === 'blocked' ? 'modeGpsBlocked' : 'modeGpsWait');
 }
 setGpsStatus('off');
 $('beep1').onclick = () => beep('direct'); $('beep2').onclick = () => beep('media'); $('beep3').onclick = () => beep('file');

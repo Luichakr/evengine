@@ -5,6 +5,7 @@ import { t, getLang, pick, formatRpm } from './i18n.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 const SPEED_MAX = 240;
+const GEAR_FONT = 60;          // must match .cluster-svg .gear font-size in app.css
 
 function el(name, attrs, parent) { const e = document.createElementNS(NS, name); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
 function text(parent, x, y, cls, value) { const e = el('text', { x, y, class: cls }, parent); e.textContent = value; return e; }
@@ -25,7 +26,9 @@ function arcLabels(parent, cx, cy, r, values, max, startDeg, sweepDeg, cls) {
 function gearBadge(parent, cx, cy, w, h) {
   el('rect', { x: cx - w / 2, y: cy - h / 2, width: w, height: h, class: 'badge' }, parent);
   text(parent, cx, cy - h / 2 - 14, 'label', t('gearLabel'));
-  return text(parent, cx, cy + h * 0.24, 'gear', 'N');
+  // Digits have no descender, so the glyph is centred when its baseline sits half a cap height below
+  // the badge centre (cap height ≈ 0.70 em of the 60px .gear font).
+  return text(parent, cx, cy + GEAR_FONT * 0.35, 'gear', 'N');
 }
 function rpmScale(redline) { const top = Math.ceil(redline / 1000), step = top > 12 ? 2 : 1, values = []; for (let v = 0; v <= top; v += step) values.push(v); return { top, values }; }
 function setLit(ticks, st, lit, redFrom) {

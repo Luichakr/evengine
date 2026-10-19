@@ -14,7 +14,7 @@ export const fx = (() => {
         const c = 'fx-' + kind; root.classList.remove(c); void root.offsetWidth; root.classList.add(c);
         setTimeout(() => root.classList.remove(c), 900);
       } else if (kind === 'upshift' || kind === 'downshift') {
-        const cl = cluster(); if (cl) { cl.classList.remove('shift'); void cl.offsetWidth; cl.classList.add('shift'); setTimeout(() => cl.classList.remove('shift'), 440); }
+        const cl = cluster(); if (cl) { cl.classList.remove('shift'); void cl.offsetWidth; cl.classList.add('shift'); setTimeout(() => cl.classList.remove('shift'), 520); }
       }
     },
     // level = rpm/redline (0..1), kmh, event, running
