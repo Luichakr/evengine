@@ -98,6 +98,24 @@
     <div class="ml"><b>GPS</b><small id="gpsStatus">Off (demo)</small></div>
   </div>
   <div class="menu-block">
+    <b data-i18n="soundTitle">Звук</b>
+    <div class="sliders">
+      <label class="slider"><span data-i18n="volMaster">Гучність</span>
+        <input type="range" id="volMaster" min="0" max="1" step="0.01"><output id="volMasterV"></output></label>
+      <label class="slider"><span data-i18n="volEngine">Двигун</span>
+        <input type="range" id="volEngine" min="0" max="2" step="0.01"><output id="volEngineV"></output></label>
+      <label class="slider"><span data-i18n="volPops">Постріли</span>
+        <input type="range" id="volPops" min="0" max="2" step="0.01"><output id="volPopsV"></output></label>
+      <label class="slider"><span data-i18n="volTurbo">Турбо</span>
+        <input type="range" id="volTurbo" min="0" max="2" step="0.01"><output id="volTurboV"></output></label>
+      <label class="slider"><span data-i18n="volIntake">Впуск</span>
+        <input type="range" id="volIntake" min="0" max="2" step="0.01"><output id="volIntakeV"></output></label>
+      <label class="slider"><span data-i18n="volSpace">Простір</span>
+        <input type="range" id="volSpace" min="0" max="1" step="0.01"><output id="volSpaceV"></output></label>
+    </div>
+    <button class="menu-link" id="soundReset" data-i18n="soundReset">Скинути звук</button>
+  </div>
+  <div class="menu-block">
     <b data-i18n="soundCheckTitle">Немає звуку? Перевірка звуку</b>
     <small data-i18n="soundCheckHint"></small>
     <div class="beeps">

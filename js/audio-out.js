@@ -3,13 +3,22 @@
 // (some car browsers only route media-element playback to the car audio).
 
 let ctx = null, bus = null, analyser = null, mediaDest = null, mediaEl = null, route = 'direct';
+let volume = 0.8;
 const buf = new Float32Array(2048);
+
+// Master volume, 0..1 (slightly curved so the lower half of the slider is useful)
+export function setVolume(v) {
+  volume = Math.max(0, Math.min(1, v));
+  if (bus) bus.gain.setTargetAtTime(Math.pow(volume, 1.6) * 1.25, ctx.currentTime, 0.03);
+}
+export function getVolume() { return volume; }
 
 export function context() {
   if (ctx) return ctx;
   const AC = window.AudioContext || window.webkitAudioContext;
   try { ctx = new AC({ latencyHint: 'playback' }); } catch (e) { ctx = new AC(); }
   bus = ctx.createGain();
+  bus.gain.value = Math.pow(volume, 1.6) * 1.25;
   analyser = ctx.createAnalyser(); analyser.fftSize = 2048;
   bus.connect(analyser);
   connectRoute();

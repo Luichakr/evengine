@@ -56,7 +56,10 @@ export class EngineSynthDSP {
     const rd = [0.0073, 0.0111, 0.0097, 0.0137]; this.room = [];
     for (let i = 0; i < 4; i++) { const len = Math.max(1, Math.round(rd[i] * sampleRate)); this.room.push({ buf: new Float32Array(len), pos: 0, lp: 0 }); }
     this.p = null; this._cranked = false;
+    // Live user mix (multipliers, 0..2): set from the menu, applied where each part is used.
+    this.mix = { engine: 1, pops: 1, turbo: 1, intake: 1 };
   }
+  get popG() { return this.p.popGain * this.mix.pops; }
   _bank() { return { sig: 0, noise: 0, pipe: new Pipe(4096), aftT: -1, aftLen: 1, aftAmp: 0, pan: 0 }; }
 
   handle(msg) {
@@ -72,6 +75,7 @@ export class EngineSynthDSP {
       this.target.rpm = msg.rpm; this.target.load = msg.load; this.target.overrun = !!msg.overrun;
       this.rampLeft = Math.round(gap); this.rpmStep = (msg.rpm - this.rpm) / this.rampLeft;
     }
+    else if (msg.type === 'mix') { for (const k in this.mix) if (typeof msg[k] === 'number') this.mix[k] = msg[k]; }
     else if (msg.type === 'on') this.on = msg.on;
     else if (msg.type === 'crank') this.cranking = msg.on;
     else if (msg.type === 'ignition') { this.ignitionOff = !msg.on; this.offTime = 0; this.stopped = false; }
@@ -120,12 +124,12 @@ export class EngineSynthDSP {
     c.start = this.cycle; c.amp = amp;
   }
   afterfire(bank, strength, ms) {
-    const b = this.banks[bank], amp = strength * this.p.popGain * 1.6;
+    const b = this.banks[bank], amp = strength * this.popG * 1.6;
     if (b.aftT >= 0 && b.aftAmp > amp) return;
     b.aftT = 0; b.aftLen = Math.max(8, ms * 0.001 * this.sr); b.aftAmp = amp;
-    this.pop = 1; this.popAmp = strength * this.p.popGain * 0.16;   // sharp crack, bypasses the muffler so it cuts through
+    this.pop = 1; this.popAmp = strength * this.popG * 0.16;   // sharp crack, bypasses the muffler so it cuts through
   }
-  triggerBang(s) { this.afterfire(0, s, 8); this.afterfire(1, s * 0.9, 7); this.bang = 1; this.bangAmp = s * this.p.popGain * 1.5; }
+  triggerBang(s) { this.afterfire(0, s, 8); this.afterfire(1, s * 0.9, 7); this.bang = 1; this.bangAmp = s * this.popG * 1.5; }
 
   render(outL, outR, n) {
     const p = this.p; if (!p) { for (let i = 0; i < n; i++) { outL[i] = 0; outR[i] = 0; } return; }
@@ -165,7 +169,7 @@ export class EngineSynthDSP {
         L += body * panL; R += body * panR;
       }
 
-      const intake = this.intake.run(pulses * (0.6 + 0.4 * (Math.random() * 2 - 1))) * p.intake.amp * (0.15 + this.load);
+      const intake = this.intake.run(pulses * (0.6 + 0.4 * (Math.random() * 2 - 1))) * p.intake.amp * this.mix.intake * (0.15 + this.load);
       L += intake; R += intake;
 
       let pop = 0;
@@ -186,8 +190,8 @@ export class EngineSynthDSP {
 
       if (p.turbo) {
         this.turboPhase += TWO_PI * p.turbo.hz * (0.35 + 0.65 * this.boost) / sr; if (this.turboPhase > TWO_PI) this.turboPhase -= TWO_PI;
-        let turbo = Math.sin(this.turboPhase) * this.boost * this.boost * p.turbo.whine;
-        if (this.bov > 0.001) { turbo += this.bovFilter.run(Math.random() * 2 - 1) * this.bov * p.turbo.bov; this.bov *= this.bovDecay; }
+        let turbo = Math.sin(this.turboPhase) * this.boost * this.boost * p.turbo.whine * this.mix.turbo;
+        if (this.bov > 0.001) { turbo += this.bovFilter.run(Math.random() * 2 - 1) * this.bov * p.turbo.bov * this.mix.turbo; this.bov *= this.bovDecay; }
         L += turbo; R += turbo;
       }
 
@@ -197,7 +201,7 @@ export class EngineSynthDSP {
 
       this.dcOut = L - this.dc + 0.9975 * this.dcOut; this.dc = L;
       this.dcOutR = R - this.dcR + 0.9975 * this.dcOutR; this.dcR = R;
-      const g = p.output * this.level;
+      const g = p.output * this.mix.engine * this.level;
       outL[i] = Math.tanh(this.dcOut * p.drive) / Math.tanh(p.drive) * g;
       outR[i] = Math.tanh(this.dcOutR * p.drive) / Math.tanh(p.drive) * g;
     }

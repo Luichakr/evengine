@@ -23,7 +23,8 @@ export class SynthAudio {
       srcGain.connect(eq.input);
       eq.output.connect(dry); eq.output.connect(conv); conv.connect(wet);
       dry.connect(comp); wet.connect(comp); comp.connect(output());
-      this._srcGain = srcGain;
+      this._srcGain = srcGain; this._wet = wet;
+      if (this.space != null) this.setSpace(this.space);
 
       // Try the worklet with a 3s timeout; fall back to ScriptProcessor.
       // The worklet module is assembled from synth-dsp.js as a Blob (no cross-file import), so it loads
@@ -53,11 +54,15 @@ export class SynthAudio {
       this.kind = usedWorklet ? 'AudioWorklet' : 'ScriptProcessor';
       this.node.connect(srcGain);
       if (this.profile) this.post({ type: 'profile', profile: this.profile });
+      if (this.mix) this.post(Object.assign({ type: 'mix' }, this.mix));
     })();
     return this.ready;
   }
 
-  setProfile(p) { this.profile = p; this.post({ type: 'profile', profile: p }); }
+  setProfile(p) { this.profile = p; this.post({ type: 'profile', profile: p }); if (this.mix) this.setMix(this.mix); }
+  setMix(m) { this.mix = m; this.post(Object.assign({ type: 'mix' }, m)); }   // engine / pops / turbo / intake
+  // How much room the engine sits in: 0 = dry, 1 = the most reverb we allow
+  setSpace(v) { this.space = v; if (this._wet) this._wet.gain.setTargetAtTime(v * 0.24, this.ctx.currentTime, 0.05); }
   on(v) { this.post({ type: 'on', on: v }); }
   crank(v) { this.post({ type: 'crank', on: v }); }
   ignition(v) { this.post({ type: 'ignition', on: v }); }

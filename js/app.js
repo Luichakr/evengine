@@ -9,7 +9,7 @@ import { Drivetrain } from './drivetrain.js';
 import { GpsSpeed, DemoSpeed } from './speed.js';
 import { fx } from './fx.js';
 import { SynthAudio } from './synth-audio.js';
-import { unlock, setRoute, beep, resumeIfNeeded } from './audio-out.js';
+import { unlock, setRoute, beep, resumeIfNeeded, setVolume } from './audio-out.js';
 
 const $ = id => document.getElementById(id);
 const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
@@ -240,6 +240,29 @@ function updateModeChip() {
   txt.textContent = t(s === 'on' ? 'modeGpsLive' : s === 'blocked' ? 'modeGpsBlocked' : 'modeGpsWait');
 }
 setGpsStatus('off');
+/* ---------- sound mixer: master volume + the parts of the engine we can scale ---------- */
+const MIX_DEFAULT = { master: 0.8, engine: 1, pops: 1, turbo: 1, intake: 1, space: 0.5 };
+const mix = (() => { try { return Object.assign({}, MIX_DEFAULT, JSON.parse(store.get('ge.mix') || '{}')); } catch (e) { return Object.assign({}, MIX_DEFAULT); } })();
+const MIX_IDS = [['volMaster', 'master'], ['volEngine', 'engine'], ['volPops', 'pops'], ['volTurbo', 'turbo'], ['volIntake', 'intake'], ['volSpace', 'space']];
+const pushMix = () => audio.setMix({ engine: mix.engine, pops: mix.pops, turbo: mix.turbo, intake: mix.intake });
+function applyMix() {
+  setVolume(mix.master); pushMix(); audio.setSpace(mix.space);
+  MIX_IDS.forEach(([id, key]) => { const el = $(id), out = $(id + 'V'); if (!el) return; el.value = mix[key]; out.textContent = Math.round(mix[key] * 100) + '%'; });
+  store.set('ge.mix', JSON.stringify(mix));
+}
+MIX_IDS.forEach(([id, key]) => {
+  const el = $(id); if (!el) return;
+  el.oninput = () => {
+    mix[key] = +el.value; $(id + 'V').textContent = Math.round(mix[key] * 100) + '%';
+    if (key === 'master') setVolume(mix.master);
+    else if (key === 'space') audio.setSpace(mix.space);
+    else pushMix();
+    store.set('ge.mix', JSON.stringify(mix));
+  };
+});
+$('soundReset').onclick = () => { Object.assign(mix, MIX_DEFAULT); applyMix(); };
+applyMix();
+
 $('beep1').onclick = () => beep('direct'); $('beep2').onclick = () => beep('media'); $('beep3').onclick = () => beep('file');
 $('routeSeg').addEventListener('click', e => { const b = e.target.closest('button[data-route]'); if (!b) return; setRoute(b.dataset.route); [...$('routeSeg').children].forEach(x => x.classList.toggle('active', x === b)); });
 
