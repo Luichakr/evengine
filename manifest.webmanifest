@@ -1,0 +1,13 @@
+{
+  "name": "EV ENGINE",
+  "short_name": "EV ENGINE",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#040405",
+  "theme_color": "#040405",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>EV ENGINE — звук для вашого електрокара</title>
+<meta name="description" content="Перетворіть тихий електромобіль на спорткар: синтезований звук двигуна (V12, V8, Flat-6, F1 V10) за швидкістю GPS. Відкрийте у браузері авто.">
+<meta name="theme-color" content="#040405">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div id="scene" aria-hidden="true"><div class="horizon"></div></div>
+
+<header id="topbar">
+  <div class="brand" id="brand"><span class="ghost" id="brandGhost"></span><span class="brand-name" data-i18n="appName">GHOST ENGINE</span></div>
+  <div class="top-right">
+    <div class="lang-seg" id="langSeg" role="group" aria-label="Мова">
+      <button type="button" data-lang="uk" class="active">UA</button>
+      <button type="button" data-lang="en">EN</button>
+    </div>
+    <button class="hamburger" id="menuBtn" aria-label="Меню" aria-haspopup="dialog"><span></span><span></span></button>
+  </div>
+</header>
+
+<main id="main">
+  <!-- Screen 1: Safety -->
+  <section class="screen safety" id="screen-safety" aria-label="Перед поїздкою">
+    <div class="sheet">
+      <h2 class="sheet-title" data-i18n="safetyTitle">ПЕРЕД ПОЇЗДКОЮ</h2>
+      <ol class="safety-list">
+        <li><span class="n">1</span><span data-i18n="safety1"></span></li>
+        <li><span class="n">2</span><span data-i18n="safety2"></span></li>
+        <li><span class="n">3</span><span data-i18n="safety3"></span></li>
+      </ol>
+      <p class="disclaimer" data-i18n="safetyDisclaimer"></p>
+      <button class="neon-btn" id="safetyOk" data-i18n="safetyBtn">Я ЗГОДЕН</button>
+    </div>
+  </section>
+
+  <!-- Screen 2: Intro / Tap to ignite -->
+  <section class="screen intro" id="screen-intro" aria-label="Запуск" hidden>
+    <div class="intro-inner">
+      <svg id="introMark" class="intro-mark" viewBox="0 7 100 96" aria-hidden="true"></svg>
+      <div class="intro-word" data-i18n="appName">GHOST ENGINE</div>
+      <div class="intro-tag" data-i18n="tagline">Звук для вашого електрокара</div>
+      <button class="neon-btn breathe" id="igniteBtn" data-i18n="ignite">ЗАПУСТИТИ</button>
+    </div>
+  </section>
+
+  <!-- Screen 3: Choose engine -->
+  <section class="screen picker" id="screen-picker" aria-label="Оберіть двигун" hidden>
+    <div class="picker-bg" id="pickerBg" aria-hidden="true"></div>
+    <a class="remind-banner" id="remindBanner" hidden><span data-i18n="remindTitle">Нагадати в авто</span> <span class="chev">›</span></a>
+    <div class="engine-grid" id="engineGrid" role="radiogroup" aria-label="Двигун"></div>
+    <button class="neon-btn start-btn breathe" id="startBtn" data-i18n="start">СТАРТ</button>
+    <p class="start-hint" data-i18n="startHint"></p>
+    <p class="credit"><a id="creditLink" href="https://ecofactortech.com" target="_blank" rel="noopener">ECOFACTOR</a></p>
+  </section>
+
+  <!-- Screen 4: Cluster -->
+  <section class="screen cluster-screen" id="screen-cluster" aria-label="Приладова панель" hidden>
+    <div class="cluster" id="cluster"></div>
+    <div class="toast" id="volumeToast" hidden>
+      <span class="spk" aria-hidden="true">🔊</span>
+      <div><b data-i18n="volumeTitle"></b><small data-i18n="volumeNote"></small></div>
+    </div>
+    <div class="cluster-buttons">
+      <button class="stop-btn" id="stopBtn" data-i18n="stopEngine">ЗУПИНИТИ ДВИГУН</button>
+      <button class="rev-btn" id="revBtn" data-i18n="holdToRev">ТРИМАЙТЕ, ЩОБ ГАЗУВАТИ</button>
+    </div>
+  </section>
+</main>
+
+<!-- Side menu -->
+<div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Меню" hidden>
+  <div class="drawer-head"><span data-i18n="menu">Меню</span><button class="drawer-close" id="drawerClose" aria-label="Закрити">×</button></div>
+  <div class="menu-row">
+    <div class="ml"><b data-i18n="demo">Демо‑поїздка</b><small data-i18n="demoNote"></small></div>
+    <button class="switch on" id="demoSwitch" role="switch" aria-checked="true" aria-label="Демо"></button>
+  </div>
+  <div class="menu-row">
+    <div class="ml"><b data-i18n="stats">Анонімна статистика</b><small data-i18n="statsNote"></small></div>
+    <button class="switch on" id="statsSwitch" role="switch" aria-checked="true" aria-label="Статистика"></button>
+  </div>
+  <div class="menu-row static">
+    <div class="ml"><b>GPS</b><small id="gpsStatus">Off (demo)</small></div>
+  </div>
+  <div class="menu-block">
+    <b data-i18n="soundCheckTitle">Немає звуку? Перевірка звуку</b>
+    <small data-i18n="soundCheckHint"></small>
+    <div class="beeps">
+      <button id="beep1">1 · Beep (direct)</button>
+      <button id="beep2">2 · Beep (media)</button>
+      <button id="beep3">3 · Beep (file)</button>
+    </div>
+    <div class="route-seg" id="routeSeg">
+      <button data-route="direct" class="active">Direct</button>
+      <button data-route="media">Media player</button>
+    </div>
+  </div>
+  <button class="menu-link" id="remindBtn" data-i18n="remindTitle" hidden>Нагадати в авто</button>
+</aside>
+
+<!-- engine side sheet (change engine from cluster) -->
+<div class="sheet-backdrop" id="engSheetBackdrop" hidden></div>
+<aside class="engine-sheet" id="engineSheet" aria-label="Змінити двигун" hidden>
+  <div class="drawer-head"><span data-i18n="changeEngine">Змінити двигун</span><button class="drawer-close" id="engSheetClose" aria-label="Закрити">×</button></div>
+  <div class="engine-grid narrow" id="engineGridSheet" role="radiogroup"></div>
+</aside>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
