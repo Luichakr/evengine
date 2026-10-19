@@ -268,6 +268,7 @@ html.fx-start .cluster-svg, html.fx-switch .cluster-svg { animation: dialsPower 
 .beeps button, .route-seg button, .menu-link { background-color: var(--panel); border: 1px solid var(--line); color: var(--steel);
   font: 600 15px/1 var(--font); cursor: pointer; transition: border-color .25s, box-shadow .25s, background-color .25s, color .25s; }
 .beeps button { flex: 1 1 180px; min-height: 52px; margin: 4px; }
+.seg-label { margin: 14px 0 2px; color: var(--steel); font-size: 14px; }
 .route-seg { display: flex; margin: 10px -4px 2px; }
 .route-seg button { flex: 1; min-height: 48px; margin: 0 4px; }
 .route-seg button.active { border-color: var(--accent); background-color: var(--panel-2); color: var(--text-hi);

@@ -241,15 +241,29 @@ function updateModeChip() {
 }
 setGpsStatus('off');
 /* ---------- sound mixer: master volume + the parts of the engine we can scale ---------- */
-const MIX_DEFAULT = { master: 0.8, engine: 1, pops: 1, turbo: 1, intake: 1, space: 0.5 };
+const MIX_DEFAULT = { master: 0.8, engine: 1, pops: 1, turbo: 1, intake: 1, space: 0.5, popLevel: 'hard', popChar: 0.5 };
 const mix = (() => { try { return Object.assign({}, MIX_DEFAULT, JSON.parse(store.get('ge.mix') || '{}')); } catch (e) { return Object.assign({}, MIX_DEFAULT); } })();
 const MIX_IDS = [['volMaster', 'master'], ['volEngine', 'engine'], ['volPops', 'pops'], ['volTurbo', 'turbo'], ['volIntake', 'intake'], ['volSpace', 'space']];
-const pushMix = () => audio.setMix({ engine: mix.engine, pops: mix.pops, turbo: mix.turbo, intake: mix.intake });
+const POP_RATE = { off: 0, soft: 0.45, hard: 1 };
+const pushMix = () => audio.setMix({ engine: mix.engine, pops: mix.pops, turbo: mix.turbo, intake: mix.intake,
+  popRate: POP_RATE[mix.popLevel] != null ? POP_RATE[mix.popLevel] : 1, popChar: mix.popChar });
+function markSeg(segId, value) {
+  [...$(segId).children].forEach(b => b.classList.toggle('active', b.dataset.v === String(value)));
+}
 function applyMix() {
   setVolume(mix.master); pushMix(); audio.setSpace(mix.space);
   MIX_IDS.forEach(([id, key]) => { const el = $(id), out = $(id + 'V'); if (!el) return; el.value = mix[key]; out.textContent = Math.round(mix[key] * 100) + '%'; });
+  markSeg('popLevelSeg', mix.popLevel); markSeg('popCharSeg', mix.popChar);
   store.set('ge.mix', JSON.stringify(mix));
 }
+$('popLevelSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  mix.popLevel = b.dataset.v; markSeg('popLevelSeg', mix.popLevel); pushMix(); store.set('ge.mix', JSON.stringify(mix));
+});
+$('popCharSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return;
+  mix.popChar = +b.dataset.v; markSeg('popCharSeg', mix.popChar); pushMix(); store.set('ge.mix', JSON.stringify(mix));
+});
 MIX_IDS.forEach(([id, key]) => {
   const el = $(id); if (!el) return;
   el.oninput = () => {

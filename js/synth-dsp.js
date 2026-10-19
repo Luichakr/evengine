@@ -57,7 +57,9 @@ export class EngineSynthDSP {
     for (let i = 0; i < 4; i++) { const len = Math.max(1, Math.round(rd[i] * sampleRate)); this.room.push({ buf: new Float32Array(len), pos: 0, lp: 0 }); }
     this.p = null; this._cranked = false;
     // Live user mix (multipliers, 0..2): set from the menu, applied where each part is used.
-    this.mix = { engine: 1, pops: 1, turbo: 1, intake: 1 };
+    // popRate: how often they come (0 = off). popChar: 0 = natural (body through the pipe),
+    // 1 = sharp (a bright crack on top).
+    this.mix = { engine: 1, pops: 1, turbo: 1, intake: 1, popRate: 1, popChar: 0.5 };
   }
   get popG() { return this.p.popGain * this.mix.pops; }
   _bank() { return { sig: 0, noise: 0, pipe: new Pipe(4096), aftT: -1, aftLen: 1, aftAmp: 0, pan: 0 }; }
@@ -119,17 +121,24 @@ export class EngineSynthDSP {
     amp *= 1 - 0.55 * this.overrunMix;
     if (this.overrunMix > 0.5 && this.rpm > p.redline * 0.25) {
       if (this.cluster > 0) { if (Math.random() < 0.55) { this.afterfire(c.bank, 0.5 + 0.5 * Math.random(), 2.2 + 2.3 * Math.random()); this.cluster--; } }
-      else { const fps = this.rpm / 120 * p.cylinders; if (Math.random() < p.popRate * (1 + 3 * this.burble) / fps) this.cluster = 2 + (Math.random() * 3 | 0); }
+      else { const fps = this.rpm / 120 * p.cylinders; if (Math.random() < p.popRate * this.mix.popRate * (1 + 3 * this.burble) / fps) this.cluster = 2 + (Math.random() * 3 | 0); }
     }
     c.start = this.cycle; c.amp = amp;
   }
   afterfire(bank, strength, ms) {
-    const b = this.banks[bank], amp = strength * this.popG * 1.6;
+    if (this.mix.popRate <= 0) return;
+    const ch = this.mix.popChar;
+    // natural = more burning body through the pipe and a longer pulse; sharp = a brighter crack on top
+    const b = this.banks[bank], amp = strength * this.popG * 1.6 * (1.3 - 0.6 * ch);
     if (b.aftT >= 0 && b.aftAmp > amp) return;
-    b.aftT = 0; b.aftLen = Math.max(8, ms * 0.001 * this.sr); b.aftAmp = amp;
-    this.pop = 1; this.popAmp = strength * this.popG * 0.16;   // sharp crack, bypasses the muffler so it cuts through
+    b.aftT = 0; b.aftLen = Math.max(8, ms * (1.35 - 0.6 * ch) * 0.001 * this.sr); b.aftAmp = amp;
+    this.pop = 1; this.popAmp = strength * this.popG * 0.16 * (0.45 + 1.4 * ch);   // crack bypasses the muffler
   }
-  triggerBang(s) { this.afterfire(0, s, 8); this.afterfire(1, s * 0.9, 7); this.bang = 1; this.bangAmp = s * this.popG * 1.5; }
+  triggerBang(s) {
+    if (this.mix.popRate <= 0) return;
+    this.afterfire(0, s, 8); this.afterfire(1, s * 0.9, 7);
+    this.bang = 1; this.bangAmp = s * this.popG * 1.5 * (1.25 - 0.5 * this.mix.popChar);
+  }
 
   render(outL, outR, n) {
     const p = this.p; if (!p) { for (let i = 0; i < n; i++) { outL[i] = 0; outR[i] = 0; } return; }
