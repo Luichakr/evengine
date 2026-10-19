@@ -75,7 +75,47 @@ export const ENGINES = {
       flowNoise: 0.25, flowNoiseHz: 3000, bankGain: [1, 0.9], pipesMs: [1.1, 1.25], pipeFeedback: 0.3, pipeDamp: 0.45,
       muffler: { hz: 3500, valve: 0.5, perRpm: 1.0 }, resonators: [[180, 1.2, 0.3], [900, 2, 0.35], [2800, 3, 0.3]], dry: 0.6,
       intake: { hz: 1200, perRpm: 0.15, q: 2, amp: 0.28 }, drive: 1.4, popRate: 1.5, popGain: 2.40, output: 0.45 }
+  },
+  bmw: {
+    id: 'bmw',
+    name: { en: 'BMW V10', ua: 'BMW V10' },
+    description: { en: 'The M5 V10. A metallic, high-strung howl to 8,250 rpm.', ua: 'V10 від M5. Металеве, напружене виття до 8 250 об/хв.' },
+    examples: 'BMW M5 E60, BMW M6 E63, BMW S85',
+    idleRpm: 900, launchRpm: 4000, redline: 8250, revUp: 0.7, revDown: 1.9,
+    gearTopKmh: [62, 100, 140, 180, 220, 258, 300], shiftLight: 2800, shiftHard: 8050, downLight: 2200, downHard: 4800,
+    synth: { cylinders: 10, redline: 8250, limiterRpm: 8200, pulseDeg: 24, banks: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+      cylinderSpread: 0.16, timingSpread: 0.006, combustionSpread: 0.2, timingJitter: 0.002, idleAmp: 0.32,
+      flowNoise: 0.28, flowNoiseHz: 2600, bankGain: [1, 0.88], pipesMs: [1.6, 1.85], pipeFeedback: 0.34, pipeDamp: 0.48,
+      muffler: { hz: 1400, valve: 1.25, perRpm: 1.15 }, resonators: [[120, 1.2, 0.34], [620, 2.2, 0.34], [2100, 3, 0.28]], dry: 0.64,
+      intake: { hz: 850, perRpm: 0.14, q: 2, amp: 0.34 }, drive: 1.45, popRate: 3.0, popGain: 2.90, output: 0.5 }
+  },
+  amg: {
+    id: 'amg',
+    name: { en: 'AMG V8 6.2', ua: 'AMG V8 6.2' },
+    description: { en: 'A big naturally aspirated AMG V8. Thunderous idle, hard pull to 7,200 rpm.', ua: 'Великий атмосферний V8 від AMG. Громовий холостий, різкий підхват до 7 200 об/хв.' },
+    examples: 'Mercedes-AMG C63 W204, E63 AMG, SLS AMG',
+    idleRpm: 700, launchRpm: 3400, redline: 7200, revUp: 0.95, revDown: 2.3,
+    gearTopKmh: [70, 112, 160, 210, 260, 305, 330], shiftLight: 2400, shiftHard: 6950, downLight: 1800, downHard: 4300,
+    synth: { cylinders: 8, redline: 7200, limiterRpm: 7150, pulseDeg: 30, banks: [0, 1, 1, 0, 1, 0, 0, 1],
+      cylinderSpread: 0.24, timingSpread: 0.008, combustionSpread: 0.36, timingJitter: 0.003, idleAmp: 0.40,
+      flowNoise: 0.3, flowNoiseHz: 1700, bankGain: [1, 0.8], pipesMs: [2.8, 3.3], pipeFeedback: 0.4, pipeDamp: 0.52,
+      muffler: { hz: 800, valve: 1.45, perRpm: 1.05 }, resonators: [[70, 1.2, 0.48], [260, 2, 0.32], [1100, 3, 0.2]], dry: 0.68,
+      intake: { hz: 480, perRpm: 0.13, q: 1.9, amp: 0.3 }, drive: 1.55, popRate: 3.6, popGain: 3.30, output: 0.5 }
+  },
+  p911t: {
+    id: 'p911t',
+    name: { en: 'Porsche Flat-6 Turbo', ua: 'Porsche Flat-6 Turbo' },
+    description: { en: 'A turbocharged boxer. Flat-six beat with turbo whistle and blow-off to 7,200 rpm.', ua: 'Турбований боксер. Опозитний ритм із турбосвистом і блоу‑оф до 7 200 об/хв.' },
+    examples: 'Porsche 911 Turbo S 992, 911 Carrera S, Macan Turbo',
+    idleRpm: 820, launchRpm: 3200, redline: 7200, revUp: 0.8, revDown: 2.0,
+    gearTopKmh: [65, 100, 140, 180, 220, 260, 300, 330], shiftLight: 2500, shiftHard: 6950, downLight: 1900, downHard: 4200,
+    synth: { cylinders: 6, redline: 7200, limiterRpm: 7150, pulseDeg: 44, uneven: [0, 0.006, -0.005, 0.004, -0.003, 0.006], banks: [0, 1, 0, 1, 0, 1],
+      cylinderSpread: 0.22, combustionSpread: 0.26, timingJitter: 0.002, idleAmp: 0.33,
+      flowNoise: 0.33, flowNoiseHz: 2100, bankGain: [1, 0.8], pipesMs: [2.5, 2.9], pipeFeedback: 0.37, pipeDamp: 0.55,
+      muffler: { hz: 850, valve: 1.3, perRpm: 1.05 }, resonators: [[80, 1.2, 0.4], [300, 2.2, 0.3], [1250, 3.5, 0.24]], dry: 0.65,
+      intake: { hz: 560, perRpm: 0.14, q: 2.2, amp: 0.36 }, drive: 1.45, popRate: 2.8, popGain: 2.80, output: 0.5,
+      turbo: { hz: 4800, whine: 0.04, bov: 0.4, spool: 0.55 } }
   }
 };
 
-export const ENGINE_ORDER = ['v12', 'v8it', 'f6', 'v8us', 'i6t', 'f1'];
+export const ENGINE_ORDER = ['v12', 'v8it', 'f6', 'v8us', 'i6t', 'f1', 'bmw', 'amg', 'p911t'];
