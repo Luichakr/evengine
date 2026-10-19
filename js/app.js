@@ -241,12 +241,14 @@ function updateModeChip() {
 }
 setGpsStatus('off');
 /* ---------- sound mixer: master volume + the parts of the engine we can scale ---------- */
-const MIX_DEFAULT = { master: 0.8, engine: 1, pops: 1, turbo: 1, intake: 1, space: 0.5, popLevel: 'hard', popChar: 0.15 };
+const MIX_DEFAULT = { master: 0.8, exhaust: 1, engine: 0.5, pops: 1, turbo: 1, space: 0.5, popLevel: 'hard', popChar: 0.15 };
 const mix = (() => { try { return Object.assign({}, MIX_DEFAULT, JSON.parse(store.get('ge.mix') || '{}')); } catch (e) { return Object.assign({}, MIX_DEFAULT); } })();
-const MIX_IDS = [['volMaster', 'master'], ['volEngine', 'engine'], ['volPops', 'pops'], ['volTurbo', 'turbo'], ['volIntake', 'intake'], ['volSpace', 'space']];
-const POP_RATE = { off: 0, soft: 0.45, hard: 1 };
-const pushMix = () => audio.setMix({ engine: mix.engine, pops: mix.pops, turbo: mix.turbo, intake: mix.intake,
-  popRate: POP_RATE[mix.popLevel] != null ? POP_RATE[mix.popLevel] : 1, popChar: mix.popChar });
+const MIX_IDS = [['volMaster', 'master'], ['volExhaust', 'exhaust'], ['volEngine', 'engine'], ['volPops', 'pops'], ['volTurbo', 'turbo'], ['volSpace', 'space']];
+// Clearly different presets: soft is rare and quiet, aggressive is dense and loud
+const POP_PRESET = { off: { rate: 0, gain: 0 }, soft: { rate: 0.3, gain: 0.45 }, hard: { rate: 2.2, gain: 1 } };
+const pushMix = () => { const pre = POP_PRESET[mix.popLevel] || POP_PRESET.hard;
+  audio.setMix({ exhaust: mix.exhaust, mech: mix.engine, pops: mix.pops * pre.gain, turbo: mix.turbo,
+    popRate: pre.rate, popChar: mix.popChar }); };
 function markSeg(segId, value) {
   [...$(segId).children].forEach(b => b.classList.toggle('active', b.dataset.v === String(value)));
 }

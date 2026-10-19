@@ -59,7 +59,8 @@ export class EngineSynthDSP {
     // Live user mix (multipliers, 0..2): set from the menu, applied where each part is used.
     // popRate: how often they come (0 = off). popChar: 0 = natural (body through the pipe),
     // 1 = sharp (a bright crack on top).
-    this.mix = { engine: 1, pops: 1, turbo: 1, intake: 1, popRate: 1, popChar: 0.5 };
+    // exhaust = the pipe/muffler note (what you mostly hear in the car), mech = induction/airbox
+    this.mix = { exhaust: 1, mech: 1, pops: 1, turbo: 1, popRate: 1, popChar: 0.5 };
   }
   get popG() { return this.p.popGain * this.mix.pops; }
   _bank() { return { sig: 0, noise: 0, pipe: new Pipe(4096), aftT: -1, aftLen: 1, aftAmp: 0, pan: 0 }; }
@@ -128,11 +129,14 @@ export class EngineSynthDSP {
   afterfire(bank, strength, ms) {
     if (this.mix.popRate <= 0) return;
     const ch = this.mix.popChar;
-    // natural = more burning body through the pipe and a longer pulse; sharp = a brighter crack on top
-    const b = this.banks[bank], amp = strength * this.popG * 1.6 * (1.3 - 0.6 * ch);
+    // natural = a long, dull burn with body through the pipe; sharp = a short, bright crack on top
+    const b = this.banks[bank], amp = strength * this.popG * 1.6 * (1.7 - 1.2 * ch);
     if (b.aftT >= 0 && b.aftAmp > amp) return;
-    b.aftT = 0; b.aftLen = Math.max(8, ms * (1.35 - 0.6 * ch) * 0.001 * this.sr); b.aftAmp = amp;
-    this.pop = 1; this.popAmp = strength * this.popG * 0.16 * (0.45 + 1.4 * ch);   // crack bypasses the muffler
+    b.aftT = 0; b.aftLen = Math.max(8, ms * (1.7 - 1.1 * ch) * 0.001 * this.sr); b.aftAmp = amp;
+    this.pop = 1; this.popAmp = strength * this.popG * 0.16 * (0.2 + 2.2 * ch);   // crack bypasses the muffler
+    // dull and slow when natural, bright and snappy when sharp
+    this.popFilter.set('bandpass', this.sr, 650 + 2300 * ch, 0.75 + 0.7 * ch);
+    this.popDecay = Math.exp(-1 / ((0.0075 - 0.0052 * ch) * this.sr));
   }
   triggerBang(s) {
     if (this.mix.popRate <= 0) return;
@@ -175,10 +179,11 @@ export class EngineSynthDSP {
         const ex = this.muffler[b].run(bank.pipe.run(x)) * p.bankGain[b];
         const panL = Math.sqrt(0.5 * (1 - bank.pan)), panR = Math.sqrt(0.5 * (1 + bank.pan));
         let body = ex * p.dry; for (let r = 0; r < res.length; r++) body += res[r].filter.run(ex) * res[r].gain;
+        body *= this.mix.exhaust;
         L += body * panL; R += body * panR;
       }
 
-      const intake = this.intake.run(pulses * (0.6 + 0.4 * (Math.random() * 2 - 1))) * p.intake.amp * this.mix.intake * (0.15 + this.load);
+      const intake = this.intake.run(pulses * (0.6 + 0.4 * (Math.random() * 2 - 1))) * p.intake.amp * this.mix.mech * (0.15 + this.load);
       L += intake; R += intake;
 
       let pop = 0;
@@ -210,7 +215,7 @@ export class EngineSynthDSP {
 
       this.dcOut = L - this.dc + 0.9975 * this.dcOut; this.dc = L;
       this.dcOutR = R - this.dcR + 0.9975 * this.dcOutR; this.dcR = R;
-      const g = p.output * this.mix.engine * this.level;
+      const g = p.output * this.level;
       outL[i] = Math.tanh(this.dcOut * p.drive) / Math.tanh(p.drive) * g;
       outR[i] = Math.tanh(this.dcOutR * p.drive) / Math.tanh(p.drive) * g;
     }
