@@ -241,7 +241,7 @@ function updateModeChip() {
 }
 setGpsStatus('off');
 /* ---------- sound mixer: master volume + the parts of the engine we can scale ---------- */
-const MIX_DEFAULT = { master: 0.8, engine: 1, pops: 1, turbo: 1, intake: 1, space: 0.5, popLevel: 'hard', popChar: 0.5 };
+const MIX_DEFAULT = { master: 0.8, engine: 1, pops: 1, turbo: 1, intake: 1, space: 0.5, popLevel: 'hard', popChar: 0.15 };
 const mix = (() => { try { return Object.assign({}, MIX_DEFAULT, JSON.parse(store.get('ge.mix') || '{}')); } catch (e) { return Object.assign({}, MIX_DEFAULT); } })();
 const MIX_IDS = [['volMaster', 'master'], ['volEngine', 'engine'], ['volPops', 'pops'], ['volTurbo', 'turbo'], ['volIntake', 'intake'], ['volSpace', 'space']];
 const POP_RATE = { off: 0, soft: 0.45, hard: 1 };
